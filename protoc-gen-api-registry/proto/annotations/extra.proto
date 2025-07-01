@@ -2,8 +2,12 @@ syntax = "proto3";
 
 package annotations;
 
-import "google/protobuf/descriptor.proto";
+option go_package = "github.com/nathan77886/go-tools/protoc-gen-api-registry/proto/annotations";
 
+import "google/protobuf/descriptor.proto";
+// 是否为白名单接口（免权限校验）
 extend google.protobuf.MethodOptions {
   bool white_list = 50001;
 }
+
+

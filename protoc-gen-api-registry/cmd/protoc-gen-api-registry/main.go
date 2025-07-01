@@ -3,13 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"strings"
-
+	annotations "github.com/nathan77886/go-tools/protoc-gen-api-registry/proto/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	annotations "github.com/nathan77886/go-tools/protoc-gen-api-registry/annotations" // replace with actual go_package
+	runtime "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -77,26 +75,26 @@ func main() {
 	})
 }
 
-func getHTTPRule(opts *descriptorpb.MethodOptions) *descriptorpb.HttpRule {
-	if proto.HasExtension(opts, descriptorpb.E_Http) {
-		if v, ok := proto.GetExtension(opts, descriptorpb.E_Http).(*descriptorpb.HttpRule); ok {
+func getHTTPRule(opts *descriptorpb.MethodOptions) *runtime.HttpRule {
+	if proto.HasExtension(opts, runtime.E_Http) {
+		if v, ok := proto.GetExtension(opts, runtime.E_Http).(*runtime.HttpRule); ok {
 			return v
 		}
 	}
 	return nil
 }
 
-func extractHTTP(rule *descriptorpb.HttpRule) (string, string) {
+func extractHTTP(rule *runtime.HttpRule) (string, string) {
 	switch pattern := rule.Pattern.(type) {
-	case *descriptorpb.HttpRule_Get:
+	case *runtime.HttpRule_Get:
 		return pattern.Get, "GET"
-	case *descriptorpb.HttpRule_Post:
+	case *runtime.HttpRule_Post:
 		return pattern.Post, "POST"
-	case *descriptorpb.HttpRule_Put:
+	case *runtime.HttpRule_Put:
 		return pattern.Put, "PUT"
-	case *descriptorpb.HttpRule_Delete:
+	case *runtime.HttpRule_Delete:
 		return pattern.Delete, "DELETE"
-	case *descriptorpb.HttpRule_Patch:
+	case *runtime.HttpRule_Patch:
 		return pattern.Patch, "PATCH"
 	default:
 		return "", ""
