@@ -26,7 +26,8 @@ func main() {
 		ParamFunc: flags.Set,
 	}.Run(func(plugin *protogen.Plugin) error {
 		var apis []apiMeta
-
+		var goPackage string
+		var importPath protogen.GoImportPath
 		for _, file := range plugin.Files {
 			if !file.Generate {
 				continue
@@ -66,11 +67,12 @@ func main() {
 					})
 				}
 			}
-			filename := file.GeneratedFilenamePrefix + "_api_registry.pb.go"
-			f := plugin.NewGeneratedFile(filename, file.GoImportPath)
-			writeHeader(f, string(file.GoPackageName))
-			writeApiList(f, apis)
+			importPath = file.GoImportPath
+			goPackage = string(file.GoPackageName)
 		}
+		generateFile := plugin.NewGeneratedFile("api_registry.pb.go", importPath)
+		writeHeader(generateFile, goPackage)
+		writeApiList(generateFile, apis)
 		return nil
 	})
 }
