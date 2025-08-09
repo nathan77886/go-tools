@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	annotations "github.com/nathan77886/go-tools/protoc-gen-api-registry/proto/annotations"
+	annotations "github.com/nathan77886/go-tools/proto/annotations"
 	runtime "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"

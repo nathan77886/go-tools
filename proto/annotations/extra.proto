@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package annotations;
 
-option go_package = "github.com/nathan77886/go-tools/protoc-gen-api-registry/proto/annotations";
+option go_package = "github.com/nathan77886/go-tools/proto/annotations";
 
 import "google/protobuf/descriptor.proto";
 // 是否为白名单接口（免权限校验）

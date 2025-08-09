@@ -1,4 +1,4 @@
-module github.com/nathan77886/go-tools/protoc-gen-api-registry
+module github.com/nathan77886/go-tools
 
 go 1.24
 
