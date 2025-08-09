@@ -3,21 +3,23 @@ package main
 import (
 	"flag"
 	"fmt"
-	annotations "github.com/nathan77886/go-tools/protoc-gen-api-registry/proto/annotations"
-	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/types/descriptorpb"
+	"strings"
 
+	annotations "github.com/nathan77886/go-tools/protoc-gen-api-registry/proto/annotations"
 	runtime "google.golang.org/genproto/googleapis/api/annotations"
+	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 type apiMeta struct {
-	Service   string
-	Method    string
-	Path      string
-	Verb      string
-	Group     string
-	WhiteList bool
+	Service     string
+	Method      string
+	Path        string
+	Verb        string
+	Group       string
+	WhiteList   bool
+	FrontGroups []string // 新增：前端权限分组路径
 }
 
 func main() {
@@ -28,6 +30,7 @@ func main() {
 		var apis []apiMeta
 		var goPackage string
 		var importPath protogen.GoImportPath
+
 		for _, file := range plugin.Files {
 			if !file.Generate {
 				continue
@@ -45,31 +48,39 @@ func main() {
 					if httpRule == nil {
 						continue
 					}
-
 					path, verb := extractHTTP(httpRule)
 
 					// annotations.white_list
 					white := false
 					if proto.HasExtension(opts, annotations.E_WhiteList) {
-						v, ok := proto.GetExtension(opts, annotations.E_WhiteList).(bool)
-						if ok {
+						if v, ok := proto.GetExtension(opts, annotations.E_WhiteList).(bool); ok {
 							white = v
 						}
 					}
 
+					// annotations.front_group
+					var frontGroups []string
+					if proto.HasExtension(opts, annotations.E_FrontGroup) {
+						if v, ok := proto.GetExtension(opts, annotations.E_FrontGroup).(*annotations.FrontGroup); ok && v != nil {
+							frontGroups = append(frontGroups, v.GetNodes()...)
+						}
+					}
+
 					apis = append(apis, apiMeta{
-						Service:   string(service.Desc.Name()),
-						Method:    string(method.Desc.Name()),
-						Path:      path,
-						Verb:      verb,
-						Group:     string(service.Desc.Name()),
-						WhiteList: white,
+						Service:     string(service.Desc.Name()),
+						Method:      string(method.Desc.Name()),
+						Path:        path,
+						Verb:        verb,
+						Group:       string(service.Desc.Name()),
+						WhiteList:   white,
+						FrontGroups: frontGroups, // 保存
 					})
 				}
 			}
 			importPath = file.GoImportPath
 			goPackage = string(file.GoPackageName)
 		}
+
 		generateFile := plugin.NewGeneratedFile("api_registry.pb.go", importPath)
 		writeHeader(generateFile, goPackage)
 		writeApiList(generateFile, apis)
@@ -113,14 +124,29 @@ func writeHeader(g *protogen.GeneratedFile, packageName string) {
 	g.P("\tHTTPVerb string")
 	g.P("\tGroup string")
 	g.P("\tWhiteList bool")
+	g.P("\tFrontGroups []string") // 新增字段
 	g.P("}")
 }
 
 func writeApiList(g *protogen.GeneratedFile, apis []apiMeta) {
 	g.P("\nvar ApiList = []ApiRoute{")
 	for _, a := range apis {
-		g.P(fmt.Sprintf("\t{Service: \"%s\", Method: \"%s\", Path: \"%s\", HTTPVerb: \"%s\", Group: \"%s\", WhiteList: %t},",
-			a.Service, a.Method, a.Path, a.Verb, a.Group, a.WhiteList))
+		g.P(fmt.Sprintf(
+			"\t{Service: %q, Method: %q, Path: %q, HTTPVerb: %q, Group: %q, WhiteList: %t, FrontGroups: %s},",
+			a.Service, a.Method, a.Path, a.Verb, a.Group, a.WhiteList, renderStringSlice(a.FrontGroups),
+		))
 	}
 	g.P("}")
+}
+
+// 把 []string 渲染成 Go 字面量：[]string{"a","b"}
+func renderStringSlice(ss []string) string {
+	if len(ss) == 0 {
+		return "nil"
+	}
+	quoted := make([]string, 0, len(ss))
+	for _, s := range ss {
+		quoted = append(quoted, fmt.Sprintf("%q", s))
+	}
+	return "[]string{" + strings.Join(quoted, ",") + "}"
 }

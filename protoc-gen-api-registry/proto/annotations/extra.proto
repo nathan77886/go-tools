@@ -9,5 +9,12 @@ import "google/protobuf/descriptor.proto";
 extend google.protobuf.MethodOptions {
   bool white_list = 50001;
 }
+// 新增：前端权限分组（面包屑/菜单层级）
+// 例：["用户管理","用户列表","封禁"]
+message FrontGroup {
+  repeated string nodes = 1;
+}
 
-
+extend google.protobuf.MethodOptions {
+  FrontGroup front_group = 50002;
+}
