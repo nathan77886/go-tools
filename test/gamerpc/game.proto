@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package test;
+
+option go_package = "github.com/nathan77886/go-tools/proto/test;testpb";
+
+import "proto/options/options.proto";
+
+// 定义一个简单的请求/响应
+message EchoReq {
+  string msg = 1;
+}
+
+message EchoResp {
+  string msg = 1;
+}
+
+// 一个示例服务
+service TestService {
+  // Echo 方法：客户端发 EchoReq，服务返回 EchoResp
+  rpc Echo(EchoReq) returns (EchoResp) {
+    option (gateway.options.code) = 1001;       // 客户端发包的 code
+    option (gateway.options.resp_code) = 1002;  // 回包的 code（可不写，缺省与 code 相同）
+  }
+}
