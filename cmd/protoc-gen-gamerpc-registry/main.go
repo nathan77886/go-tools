@@ -138,7 +138,7 @@ func generateFile(p *protogen.Plugin, file *protogen.File) {
 	g.P(`// `, typeName, ` 聚合本 proto 文件中定义的 gRPC 客户端。`)
 	g.P(`type `, typeName, ` struct {`)
 	for s := range svcSet {
-		g.P(`  `, lowerFirst(s), ` `, pkg, `.`, s, `Client`)
+		g.P(`  `, lowerFirst(s), ` `, s, `Client`)
 	}
 	g.P(`}`)
 	g.P()
@@ -146,7 +146,7 @@ func generateFile(p *protogen.Plugin, file *protogen.File) {
 	g.P(`func New`, typeName, `(cc grpc.ClientConnInterface) *`, typeName, ` {`)
 	g.P(`  return &`, typeName, `{`)
 	for s := range svcSet {
-		g.P(`    `, lowerFirst(s), `: `, pkg, `.New`, s, `Client(cc),`)
+		g.P(`    `, lowerFirst(s), `: New`, s, `Client(cc),`)
 	}
 	g.P(`  }`)
 	g.P(`}`)
