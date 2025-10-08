@@ -61,6 +61,10 @@ func getGoPackage(file *descriptorpb.FileDescriptorProto) string {
 	return "main"
 }
 func generateFile(file *descriptorpb.FileDescriptorProto) (string, error) {
+	if len(file.GetService()) == 0 {
+		// 没有 service，就不生成任何文件
+		return "", nil
+	}
 	tpl := `package {{.Package}}
 
 import "github.com/kataras/iris/v12"
