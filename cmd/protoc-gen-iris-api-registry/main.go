@@ -2,16 +2,14 @@ package main
 
 import (
 	"bytes"
+	"google.golang.org/protobuf/proto"
+	descriptorpb "google.golang.org/protobuf/types/descriptorpb"
+	plugin "google.golang.org/protobuf/types/pluginpb"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"text/template"
-	"unicode"
-
-	"google.golang.org/protobuf/proto"
-	descriptorpb "google.golang.org/protobuf/types/descriptorpb"
-	plugin "google.golang.org/protobuf/types/pluginpb"
 
 	annotations "google.golang.org/genproto/googleapis/api/annotations"
 )
@@ -209,57 +207,10 @@ func parseHttpOption(m *descriptorpb.MethodDescriptorProto) (path string, method
 	}
 }
 
-// proto 类型 -> Go 类型映射
-func protoTypeToGo(t descriptorpb.FieldDescriptorProto_Type, typeName string) string {
-	switch t {
-	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-		return "float64"
-	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-		return "float32"
-	case descriptorpb.FieldDescriptorProto_TYPE_INT64,
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64,
-		descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-		return "int64"
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT64,
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-		return "uint64"
-	case descriptorpb.FieldDescriptorProto_TYPE_INT32,
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32,
-		descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-		return "int32"
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT32,
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-		return "uint32"
-	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-		return "bool"
-	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-		return "string"
-	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-		return "[]byte"
-	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		return trimPackage(typeName)
-	default:
-		return "interface{}"
-	}
-}
-
 // 去掉包前缀
 func trimPackage(fullName string) string {
 	if i := strings.LastIndex(fullName, "."); i != -1 {
 		return fullName[i+1:]
 	}
 	return fullName
-}
-
-// 驼峰转换（下划线转首字母大写）
-func toCamelCase(s string) string {
-	parts := strings.Split(s, "_")
-	for i, p := range parts {
-		if len(p) > 0 {
-			r := []rune(p)
-			r[0] = unicode.ToUpper(r[0])
-			parts[i] = string(r)
-		}
-	}
-	return strings.Join(parts, "")
 }
