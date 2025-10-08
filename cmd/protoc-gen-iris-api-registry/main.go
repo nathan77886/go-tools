@@ -49,7 +49,19 @@ func main() {
 
 	os.Stdout.Write(out)
 }
-
+func getGoPackage(file *descriptorpb.FileDescriptorProto) string {
+	// 优先使用 go_package
+	if gp := file.GetOptions().GetGoPackage(); gp != "" {
+		parts := strings.Split(gp, "/")
+		return parts[len(parts)-1]
+	}
+	// 否则使用 proto package
+	if file.GetPackage() != "" {
+		parts := strings.Split(file.GetPackage(), ".")
+		return parts[len(parts)-1]
+	}
+	return "main"
+}
 func generateFile(file *descriptorpb.FileDescriptorProto) (string, error) {
 	tpl := `package {{.Package}}
 
@@ -188,7 +200,7 @@ app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(
 		Messages []Message
 		Services []Service
 	}{
-		Package:  file.GetPackage(),
+		Package:  getGoPackage(file),
 		Messages: messages,
 		Services: services,
 	}
