@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package main;
+import "google/api/annotations.proto";
+option go_package = "github.com/nathan77886/go-tools/proto/main;testpb";
+
+// 定义一个简单的请求/响应
+message EchoReq {
+  string msg = 1;
+}
+
+message EchoResp {
+  string msg = 1;
+}
+
+// 一个示例服务
+service TestServiceA {
+  // Echo 方法：客户端发 EchoReq，服务返回 EchoResp
+  rpc Echo(EchoReq) returns (EchoResp) {
+    option (google.api.http) = {
+      post: "/api/account/register1"
+      body: "*"
+    };
+  }
+}
+
+// 一个示例服务
+service TestServiceB {
+  // Echo 方法：客户端发 EchoReq，服务返回 EchoResp
+  rpc Echo(EchoReq) returns (EchoResp) {
+    option (google.api.http) = {
+      post: "/api/account/register2"
+      body: "*"
+    };
+  }
+}
