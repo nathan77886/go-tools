@@ -61,10 +61,11 @@ func getGoPackage(file *descriptorpb.FileDescriptorProto) string {
 	return "main"
 }
 func generateFile(file *descriptorpb.FileDescriptorProto) (string, error) {
+	// 没有 service 就不生成文件
 	if len(file.GetService()) == 0 {
-		// 没有 service，就不生成任何文件
 		return "", nil
 	}
+
 	tpl := `package {{.Package}}
 
 import "github.com/kataras/iris/v12"
@@ -82,16 +83,18 @@ func Register{{.Name}}(app *iris.Application, handler {{.Name}}Handler) {
 	{{- $method := .HttpMethod }}
 	{{- if eq $method "GET" }}
 app.Get("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
+		var req {{.InputType}}
+		if err := ctx.ReadQuery(&req); err != nil {
+			ctx.StatusCode(400)
+			ctx.JSON(map[string]interface{}{
+				"code":  400,
+				"data":  nil,
+				"error": err.Error(),
+			})
+			return
+		}
 {{- else if eq $method "PUT" }}
 app.Put("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
-{{- else if eq $method "PATCH" }}
-app.Patch("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
-{{- else if eq $method "DELETE" }}
-app.Delete("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
-{{- else }}
-app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
-{{- end }}
-
 		var req {{.InputType}}
 		if err := ctx.ReadJSON(&req); err != nil {
 			ctx.StatusCode(400)
@@ -102,6 +105,43 @@ app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(
 			})
 			return
 		}
+{{- else if eq $method "PATCH" }}
+app.Patch("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
+		var req {{.InputType}}
+		if err := ctx.ReadJSON(&req); err != nil {
+			ctx.StatusCode(400)
+			ctx.JSON(map[string]interface{}{
+				"code":  400,
+				"data":  nil,
+				"error": err.Error(),
+			})
+			return
+		}
+{{- else if eq $method "DELETE" }}
+app.Delete("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
+		var req {{.InputType}}
+		if err := ctx.ReadJSON(&req); err != nil {
+			ctx.StatusCode(400)
+			ctx.JSON(map[string]interface{}{
+				"code":  400,
+				"data":  nil,
+				"error": err.Error(),
+			})
+			return
+		}
+{{- else }}
+app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(ctx iris.Context) {
+		var req {{.InputType}}
+		if err := ctx.ReadJSON(&req); err != nil {
+			ctx.StatusCode(400)
+			ctx.JSON(map[string]interface{}{
+				"code":  400,
+				"data":  nil,
+				"error": err.Error(),
+			})
+			return
+		}
+{{- end }}
 
 		resp, err := handler.{{.Name}}(ctx, &req)
 		code := ctx.Values().GetIntDefault("code", 0)
