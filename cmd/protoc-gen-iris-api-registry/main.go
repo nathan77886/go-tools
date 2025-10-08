@@ -67,16 +67,6 @@ func generateFile(file *descriptorpb.FileDescriptorProto) (string, error) {
 
 import "github.com/kataras/iris/v12"
 
-// ==== Messages ====
-{{range .Messages}}
-type {{.Name}} struct {
-{{- range .Fields}}
-	{{.Name}} {{.Type}} ` + "`json:\"{{.JsonName}}\"`" + `
-{{- end}}
-}
-{{end}}
-
-// ==== Handlers ====
 {{range .Services}}
 type {{.Name}}Handler interface {
 {{- range .Methods}}
@@ -134,17 +124,6 @@ app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(
 {{end}}
 `
 
-	type Field struct {
-		Name     string
-		Type     string
-		JsonName string
-	}
-
-	type Message struct {
-		Name   string
-		Fields []Field
-	}
-
 	type Method struct {
 		Name       string
 		InputType  string
@@ -157,22 +136,6 @@ app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(
 	type Service struct {
 		Name    string
 		Methods []Method
-	}
-
-	var messages []Message
-	for _, msg := range file.GetMessageType() {
-		var fields []Field
-		for _, f := range msg.GetField() {
-			fields = append(fields, Field{
-				Name:     toCamelCase(f.GetName()),
-				Type:     protoTypeToGo(f.GetType(), f.GetTypeName()),
-				JsonName: f.GetName(),
-			})
-		}
-		messages = append(messages, Message{
-			Name:   msg.GetName(),
-			Fields: fields,
-		})
 	}
 
 	var services []Service
@@ -197,11 +160,9 @@ app.Post("{{if $path}}{{$path}}{{else}}/{{.ParentName}}/{{.Name}}{{end}}", func(
 
 	data := struct {
 		Package  string
-		Messages []Message
 		Services []Service
 	}{
 		Package:  getGoPackage(file),
-		Messages: messages,
 		Services: services,
 	}
 
